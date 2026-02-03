@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
       try {
         const emailResult = await resend.emails.send({
-          from: 'STAMINA PENGJU <onboarding@resend.dev>',
+          from: 'STAMINA PENGJU <info@staminaintl.com>',
           to: [recipientEmail],
           subject: `Nuevo contacto de STAMINA PENGJU: ${name}`,
           html: `

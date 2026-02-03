@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // Initialize Supabase client with environment variables
 // In development: uses .env.local file
@@ -16,24 +16,12 @@ const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey)
   : null;
 
-// SMTP Configuration
-const smtpConfig = {
-  host: process.env.SMTP_HOST || '',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASSWORD || '',
-  },
-};
+// Initialize Resend client
+const resendApiKey = process.env.RESEND_API_KEY || '';
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-// Create SMTP transporter if configured
-let transporter: nodemailer.Transporter | null = null;
-if (smtpConfig.host && smtpConfig.auth.user && smtpConfig.auth.pass) {
-  transporter = nodemailer.createTransport(smtpConfig);
-  console.log('[Contact API] SMTP transporter configured');
-} else {
-  console.warn('[Contact API] SMTP not configured');
+if (!resend) {
+  console.warn('[Contact API] Resend API key not configured');
 }
 
 export async function POST(request: NextRequest) {
@@ -127,17 +115,16 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-    // Send email notification using SMTP
-    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@staminaintl.com';
+    // Send email notification using Resend
     const recipientEmail = 'gerente@staminaintl.com';
 
-    if (transporter) {
-      console.log('[Contact API] Sending email via SMTP to:', recipientEmail);
+    if (resend) {
+      console.log('[Contact API] Sending email via Resend to:', recipientEmail);
 
       try {
-        const mailOptions = {
-          from: `"STAMINA PENGJU" <${fromEmail}>`,
-          to: recipientEmail,
+        const emailResult = await resend.emails.send({
+          from: 'STAMINA PENGJU <onboarding@resend.dev>',
+          to: [recipientEmail],
           subject: `Nuevo contacto de STAMINA PENGJU: ${name}`,
           html: `
             <!DOCTYPE html>
@@ -159,7 +146,7 @@ export async function POST(request: NextRequest) {
               <div class="container">
                 <div class="header">
                   <h1>STAMINA PENGJU</h1>
-                  <p>Your Strategic Bridge Between Asia and the Americas</p>
+                  <p>Your Strategic Bridge Between Asia and Americas</p>
                 </div>
                 <div class="content">
                   <h2>📋 Nuevo Contacto Recibido</h2>
@@ -203,16 +190,15 @@ export async function POST(request: NextRequest) {
             Contact ID: ${contactId}
             Este es un mensaje automático del sitio web staminaintl.com
           `,
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('[Contact API] Email sent successfully:', info.messageId);
+        console.log('[Contact API] Email sent successfully via Resend:', emailResult);
       } catch (emailError) {
-        console.error('[Contact API] Failed to send email via SMTP:', emailError);
-        // Don't fail the request, just log the error
+        console.error('[Contact API] Failed to send email via Resend:', emailError);
+        // Don't fail request, just log error
       }
     } else {
-      console.warn('[Contact API] SMTP transporter not available, skipping email');
+      console.warn('[Contact API] Resend client not available, skipping email');
     }
 
     return NextResponse.json(
@@ -220,7 +206,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Mensaje enviado correctamente. Se ha enviado una notificación por correo a gerente@staminaintl.com',
         contact_id: contactId,
-        email_notification: transporter ? 'enviado' : 'no configurado'
+        email_notification: resend ? 'enviado' : 'no configurado'
       },
       { status: 200 }
     );

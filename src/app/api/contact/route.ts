@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 // Initialize Supabase client with environment variables
 // In development: uses .env.local file
@@ -14,6 +15,26 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey)
   : null;
+
+// SMTP Configuration
+const smtpConfig = {
+  host: process.env.SMTP_HOST || '',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASSWORD || '',
+  },
+};
+
+// Create SMTP transporter if configured
+let transporter: nodemailer.Transporter | null = null;
+if (smtpConfig.host && smtpConfig.auth.user && smtpConfig.auth.pass) {
+  transporter = nodemailer.createTransport(smtpConfig);
+  console.log('[Contact API] SMTP transporter configured');
+} else {
+  console.warn('[Contact API] SMTP not configured');
+}
 
 export async function POST(request: NextRequest) {
   console.log('[Contact API] Request received at:', new Date().toISOString());
@@ -106,34 +127,92 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-    // Call Edge Function to send email notification
-    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/notify-email-function`;
-    const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzZG9iY2N0b3dleGt2enJzcm1hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNzI3ODA0NywiZXhwIjoyMDUyODU0MDQ3fQ.KJ5c4vN9BtqQ-8aT7z3V2s9W4x6X7P0r8T4v5X6P8r8';
+    // Send email notification using SMTP
+    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@staminaintl.com';
+    const recipientEmail = 'gerente@staminaintl.com';
 
-    console.log('[Contact API] Calling Edge Function to send email...');
+    if (transporter) {
+      console.log('[Contact API] Sending email via SMTP to:', recipientEmail);
 
-    try {
-      const emailResponse = await fetch(edgeFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contact_id: contactId,
-          name: name.trim(),
-          company: company?.trim() || null,
-          email: email.trim(),
-          country: country?.trim() || null,
-          message: message.trim()
-        }),
-      });
+      try {
+        const mailOptions = {
+          from: `"STAMINA PENGJU" <${fromEmail}>`,
+          to: recipientEmail,
+          subject: `Nuevo contacto de STAMINA PENGJU: ${name}`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; color: white; text-align: center; }
+                .content { padding: 30px; background: #f9f9f9; }
+                .field { margin-bottom: 15px; }
+                .field strong { color: #1a1a2e; }
+                .message { background: white; padding: 15px; border-left: 4px solid #1a1a2e; margin: 20px 0; }
+                .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>STAMINA PENGJU</h1>
+                  <p>Your Strategic Bridge Between Asia and the Americas</p>
+                </div>
+                <div class="content">
+                  <h2>📋 Nuevo Contacto Recibido</h2>
+                  <div class="field">
+                    <strong>Nombre:</strong> ${name}
+                  </div>
+                  ${company ? `<div class="field"><strong>Empresa:</strong> ${company}</div>` : ''}
+                  <div class="field">
+                    <strong>Email:</strong> <a href="mailto:${email}">${email}</a>
+                  </div>
+                  ${country ? `<div class="field"><strong>País:</strong> ${country}</div>` : ''}
+                  <div class="field">
+                    <strong>Fecha:</strong> ${new Date().toLocaleString('es-ES', { timeZone: 'America/Panama' })}
+                  </div>
+                  <div class="message">
+                    <strong>Mensaje:</strong><br>
+                    ${message.replace(/\n/g, '<br>')}
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>📧 Contact ID: ${contactId}</p>
+                  <p>Este es un mensaje automático del sitio web staminaintl.com</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `,
+          text: `
+            Nuevo Contacto Recibido
+            
+            Nombre: ${name}
+            ${company ? `Empresa: ${company}` : ''}
+            Email: ${email}
+            ${country ? `País: ${country}` : ''}
+            Fecha: ${new Date().toLocaleString('es-ES', { timeZone: 'America/Panama' })}
+            
+            Mensaje:
+            ${message}
+            
+            ---
+            Contact ID: ${contactId}
+            Este es un mensaje automático del sitio web staminaintl.com
+          `,
+        };
 
-      const emailResult = await emailResponse.json();
-      console.log('[Contact API] Edge Function response:', { status: emailResponse.status, result: emailResult });
-    } catch (emailError) {
-      console.error('[Contact API] Failed to call Edge Function:', emailError);
-      // Don't fail the request, just log the error
+        const info = await transporter.sendMail(mailOptions);
+        console.log('[Contact API] Email sent successfully:', info.messageId);
+      } catch (emailError) {
+        console.error('[Contact API] Failed to send email via SMTP:', emailError);
+        // Don't fail the request, just log the error
+      }
+    } else {
+      console.warn('[Contact API] SMTP transporter not available, skipping email');
     }
 
     return NextResponse.json(
@@ -141,7 +220,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Mensaje enviado correctamente. Se ha enviado una notificación por correo a gerente@staminaintl.com',
         contact_id: contactId,
-        email_notification: 'enviado'
+        email_notification: transporter ? 'enviado' : 'no configurado'
       },
       { status: 200 }
     );

@@ -723,7 +723,7 @@ export default function HomePage() {
                       <Mail className="h-5 w-5 text-amber-600 mt-1" />
                       <div>
                         <p className="text-slate-600 text-sm">{t.contactEmail}</p>
-                        <p className="text-slate-900 font-medium">info@staminapengju.com</p>
+                        <p className="text-slate-900 font-medium">Boris@staminaintl.com</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-4">

@@ -186,11 +186,10 @@ export default function HomePage() {
               <div className="flex items-center space-x-3 pl-4 border-l border-white/30">
                 <button
                   onClick={() => setLanguage('en')}
-                  className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300 border-2 ${
-                    language === 'en'
+                  className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300 border-2 ${language === 'en'
                       ? 'bg-amber-500 border-amber-600 shadow-lg'
                       : 'bg-white border-amber-500 hover:shadow-md'
-                  }`}
+                    }`}
                   title="English"
                 >
                   <span className="text-xl">🇺🇸</span>
@@ -200,11 +199,10 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setLanguage('es')}
-                  className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300 border-2 ${
-                    language === 'es'
+                  className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300 border-2 ${language === 'es'
                       ? 'bg-amber-500 border-amber-600 shadow-lg'
                       : 'bg-white border-amber-500 hover:shadow-md'
-                  }`}
+                    }`}
                   title="Español"
                 >
                   <span className="text-xl">🇪🇸</span>
@@ -229,7 +227,7 @@ export default function HomePage() {
         {mobileMenuOpen && (
           <div className="lg:hidden bg-gradient-to-b from-black to-orange-950">
             <div className="px-4 py-6 space-y-4">
-            <div className="text-center mb-6">
+              <div className="text-center mb-6">
                 <img
                   src="/upload/Stamina logo wb.png"
                   alt="STAMINA PENGJU"
@@ -254,11 +252,10 @@ export default function HomePage() {
                     setLanguage('en');
                     setMobileMenuOpen(false);
                   }}
-                  className={`group relative flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg transition-all duration-300 border-2 ${
-                    language === 'en'
+                  className={`group relative flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg transition-all duration-300 border-2 ${language === 'en'
                       ? 'bg-amber-500 border-amber-600 shadow-lg'
                       : 'bg-white border-amber-500 hover:shadow-md'
-                  }`}
+                    }`}
                   title="English"
                 >
                   <span className="text-2xl">🇺🇸</span>
@@ -271,11 +268,10 @@ export default function HomePage() {
                     setLanguage('es');
                     setMobileMenuOpen(false);
                   }}
-                  className={`group relative flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg transition-all duration-300 border-2 ${
-                    language === 'es'
+                  className={`group relative flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg transition-all duration-300 border-2 ${language === 'es'
                       ? 'bg-amber-500 border-amber-600 shadow-lg'
                       : 'bg-white border-amber-500 hover:shadow-md'
-                  }`}
+                    }`}
                   title="Español"
                 >
                   <span className="text-2xl">🇪🇸</span>
@@ -723,7 +719,7 @@ export default function HomePage() {
                       <Mail className="h-5 w-5 text-amber-600 mt-1" />
                       <div>
                         <p className="text-slate-600 text-sm">{t.contactEmail}</p>
-                        <p className="text-slate-900 font-medium">Boris@staminaintl.com</p>
+                        <p className="text-slate-900 font-medium">BORIS@STAMINAINTL.COM</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-4">

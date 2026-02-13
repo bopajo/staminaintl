@@ -26,7 +26,7 @@ if (!resend) {
 
 export async function POST(request: NextRequest) {
   console.log('[Contact API] Request received at:', new Date().toISOString());
-  
+
   try {
     const body = await request.json();
     const { name, company, email, country, message } = body;
@@ -116,16 +116,16 @@ export async function POST(request: NextRequest) {
     });
 
     // Send email notification using Resend
-    const recipientEmail = 'gerente@staminaintl.com';
+    const recipientEmail = 'boris@staminaintl.com';
 
     if (resend) {
       console.log('[Contact API] Sending email via Resend to:', recipientEmail);
 
       try {
         const emailResult = await resend.emails.send({
-          from: 'STAMINA PENGJU <info@staminaintl.com>',
+          from: 'STAMINAINTL <info@staminaintl.com>',
           to: [recipientEmail],
-          subject: `Nuevo contacto de STAMINA PENGJU: ${name}`,
+          subject: `Nuevo contacto de STAMINAINTL: ${name}`,
           html: `
             <!DOCTYPE html>
             <html>
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
             <body>
               <div class="container">
                 <div class="header">
-                  <h1>STAMINA PENGJU</h1>
+                  <h1>STAMINAINTL</h1>
                   <p>Your Strategic Bridge Between Asia and Americas</p>
                 </div>
                 <div class="content">
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Mensaje enviado correctamente. Se ha enviado una notificación por correo a gerente@staminaintl.com',
+        message: 'Mensaje enviado correctamente. Se ha enviado una notificación por correo a boris@staminaintl.com',
         contact_id: contactId,
         email_notification: resend ? 'enviado' : 'no configurado'
       },
